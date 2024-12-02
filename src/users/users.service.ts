@@ -2,17 +2,35 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { hash } from 'bcrypt';
+import { OrganizationsService } from 'src/organizations/organizations.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly organizationsService: OrganizationsService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
+    const roleObj = await this.prismaService.role.findFirst({
+      where: { name: createUserDto.role },
+    });
+
+    if (!roleObj) {
+      throw new BadRequestException(`Role ${createUserDto.role} not found`);
+    }
+
+    createUserDto.role_id = roleObj.id;
+
+    await this.organizationsService.findOne(createUserDto.organization_id);
     await this.checkIfUserEmailExist(createUserDto.email);
     await this.checkIfUserMobileExist(createUserDto.mobile);
 
-    // @Todo: We need to hash password
-    return 'This action adds a new user';
+    createUserDto.password = await hash(createUserDto.password, 10);
+
+    const { role, ...rest } = createUserDto;
+    return this.prismaService.user.create({ data: rest });
   }
 
   findAll() {

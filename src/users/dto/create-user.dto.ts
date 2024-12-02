@@ -37,5 +37,5 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsNumber()
-  role_id?: number;
+  role_id: number;
 }
