@@ -1,15 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { hash } from 'bcrypt';
 import { OrganizationsService } from 'src/organizations/organizations.service';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly organizationsService: OrganizationsService,
+    private readonly rolesService: RolesService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -33,16 +39,32 @@ export class UsersService {
     return this.prismaService.user.create({ data: rest });
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll() {
+    return this.prismaService.user.findMany();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} user`;
+    return this.getUser(id);
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    await this.getUser(id);
+
+    if (updateUserDto.role_id) {
+      await this.rolesService.findOne(updateUserDto.role_id);
+    }
+
+    if (updateUserDto.organization_id) {
+      await this.organizationsService.findOne(updateUserDto.organization_id);
+    }
+
+    if (updateUserDto.email) {
+      await this.checkIfUserEmailExist(updateUserDto.email, id);
+    }
+
+    if (updateUserDto.mobile) {
+      await this.checkIfUserMobileExist(updateUserDto.mobile, id);
+    }
   }
 
   remove(id: number) {
@@ -87,5 +109,15 @@ export class UsersService {
         );
       }
     }
+  }
+
+  private async getUser(id: number) {
+    const user = await this.prismaService.user.findFirst({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }
