@@ -35,6 +35,7 @@ export class UsersService {
 
     createUserDto.password = await hash(createUserDto.password, 10);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { role, ...rest } = createUserDto;
     return this.prismaService.user.create({ data: rest });
   }
@@ -48,7 +49,7 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    await this.getUser(id);
+    const user = await this.getUser(id);
 
     if (updateUserDto.role_id) {
       await this.rolesService.findOne(updateUserDto.role_id);
@@ -65,10 +66,20 @@ export class UsersService {
     if (updateUserDto.mobile) {
       await this.checkIfUserMobileExist(updateUserDto.mobile, id);
     }
+
+    if (updateUserDto.password && user.password !== updateUserDto.password) {
+      updateUserDto.password = await hash(updateUserDto.password, 10);
+    }
+
+    return this.prismaService.user.update({
+      where: { id },
+      data: updateUserDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number) {
+    await this.getUser(id);
+    return this.prismaService.user.delete({ where: { id } });
   }
 
   private async checkIfUserEmailExist(email: string, id?: number) {
