@@ -1,8 +1,19 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class RegisterDto extends CreateUserDto {}
+
+export class LoginDto {
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -14,7 +25,7 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 }
