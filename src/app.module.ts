@@ -7,6 +7,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { ItemsModule } from './items/items.module';
 
 @Module({
   controllers: [AppController],
@@ -18,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
     OrganizationsModule,
     UsersModule,
     AuthModule,
+    ItemsModule,
   ],
 })
 export class AppModule {}
