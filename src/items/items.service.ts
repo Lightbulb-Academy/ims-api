@@ -7,8 +7,28 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ItemsService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(createItemDto: CreateItemDto) {
-    return 'This action adds a new item';
+  async create(createItemDto: CreateItemDto) {
+    return this.prismaService.item.upsert({
+      where: {
+        name: createItemDto.name,
+      },
+      update: {},
+      create: {
+        name: createItemDto.name,
+        // description: createItemDto.description ?? null,
+        ...(createItemDto.description && {
+          description: createItemDto.description,
+        }),
+        organizations: {
+          create: {
+            organization_id: createItemDto.organization_id,
+            ...(createItemDto.quantity && {
+              quanity: createItemDto.quantity,
+            }),
+          },
+        },
+      },
+    });
   }
 
   findAll() {
@@ -20,6 +40,7 @@ export class ItemsService {
   }
 
   update(id: number, updateItemDto: UpdateItemDto) {
+    console.log(updateItemDto);
     return `This action updates a #${id} item`;
   }
 
