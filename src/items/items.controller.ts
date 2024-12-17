@@ -32,8 +32,8 @@ export class ItemsController {
   }
 
   @Get()
-  findAll() {
-    return this.itemsService.findAll();
+  findAll(@Req() request: JwtPayload) {
+    return this.itemsService.findAll(request.payload.organization_id);
   }
 
   @Get(':id')
